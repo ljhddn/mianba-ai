@@ -226,16 +226,36 @@ html, body { background: var(--navy-950); }
   object-fit: cover !important;
   border: 1px solid var(--line) !important;
 }
-.st-key-question_bubble {
+[class*="st-key-question_bubble"] {
+  position: relative;
   background: var(--panel);
   border: 1px solid var(--line);
   border-radius: 14px;
   padding: 16px 18px;
+  transform-origin: left center;
+  animation: bubblePop .32s cubic-bezier(.22,.85,.3,1.1) both;
 }
-.st-key-question_bubble p { color: var(--text); line-height: 1.7; }
-.st-key-question_bubble [data-testid="stCaptionContainer"] p {
+[class*="st-key-question_bubble"]::before {
+  content: "";
+  position: absolute;
+  left: -7px;
+  top: 22px;
+  width: 12px;
+  height: 12px;
+  background: var(--panel);
+  border-left: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  transform: rotate(45deg);
+}
+[class*="st-key-question_bubble"] p { color: var(--text); line-height: 1.7; }
+[class*="st-key-question_bubble"] [data-testid="stCaptionContainer"] p {
   color: var(--muted) !important;
   font-size: .76rem;
+}
+@keyframes bubblePop {
+  0%   { opacity: 0; transform: translateX(-14px) scale(.94); }
+  65%  { opacity: 1; transform: translateX(2px) scale(1.01); }
+  100% { opacity: 1; transform: translateX(0) scale(1); }
 }
 /* 右侧评委卡片 */
 [class*="st-key-judge_card_"] {
@@ -474,6 +494,390 @@ html, body { background: var(--navy-950); }
   font-size: .76rem !important;
   padding: .15rem 0 !important;
 }
+/* ---------- 页面转场：淡入 + 短暂压暗，避免硬切 ---------- */
+@keyframes pageFadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes pageCurtain {
+  from { opacity: .45; }
+  to   { opacity: 0; }
+}
+[class*="st-key-page_"] {
+  position: relative;
+  animation: pageFadeIn .3s ease both;
+}
+[class*="st-key-page_"]::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+  background: #0b0d10;
+  animation: pageCurtain .3s ease-out forwards;
+}
+.hero { animation: pageFadeIn .3s ease both; }
+
+/* ---------- 评委卡片：思考震动 / 亮起辉光 / 数字滚动 ---------- */
+@keyframes judgeCardShake {
+  0%, 100% { transform: translateX(0); }
+  18% { transform: translateX(-3px); }
+  36% { transform: translateX(3px); }
+  54% { transform: translateX(-2px); }
+  72% { transform: translateX(2px); }
+}
+@keyframes judgeCardGlow {
+  0%   { border-color: var(--line); box-shadow: none; }
+  35%  { border-color: rgba(79,124,255,.75); box-shadow: 0 0 0 1px rgba(79,124,255,.35), 0 0 20px rgba(79,124,255,.22); }
+  100% { border-color: var(--line); box-shadow: none; }
+}
+[class*="st-key-judge_card_"]:has(.judge-thinking) {
+  animation: judgeCardShake .55s ease 1 both;
+}
+[class*="st-key-judge_card_"]:has(.judge-score-reveal) {
+  animation: judgeCardGlow .7s ease 1 both;
+}
+[class*="st-key-judge_card_"][class*="deepseek"] { animation-delay: 0s; }
+[class*="st-key-judge_card_"][class*="qwen"] { animation-delay: .5s; }
+[class*="st-key-judge_card_"][class*="glm"] { animation-delay: 1s; }
+[class*="st-key-judge_card_"][class*="kimi"] { animation-delay: 1.5s; }
+[class*="st-key-judge_card_"][class*="doubao"] { animation-delay: 2s; }
+[class*="st-key-judge_card_"][class*="wenxin"] { animation-delay: 2.5s; }
+.judge-thinking {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #7aa2ff;
+  font-size: .8rem;
+  font-weight: 600;
+  animation: judgeCardShake .55s ease var(--judge-delay, 0s) 1;
+}
+.judge-thinking .thinking-dots { display: inline-flex; gap: 2px; }
+.judge-thinking .thinking-dots i {
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: #7aa2ff;
+  animation: thinkingDot 1.1s ease-in-out infinite;
+}
+.judge-thinking .thinking-dots i:nth-child(2) { animation-delay: .15s; }
+.judge-thinking .thinking-dots i:nth-child(3) { animation-delay: .3s; }
+@keyframes thinkingDot {
+  0%, 60%, 100% { transform: translateY(0); opacity: .45; }
+  30% { transform: translateY(-4px); opacity: 1; }
+}
+.judge-done { color: #4ade80; font-size: .78rem; font-weight: 600; }
+.judge-score-line {
+  font-size: 1.05rem;
+  font-weight: 700;
+  line-height: 1.15;
+  color: #f5f6f7;
+}
+.judge-score-line .score-total {
+  font-size: .72rem;
+  font-weight: 500;
+  color: var(--muted);
+}
+.judge-score-line.score-high {
+  color: #22c55e !important;
+  text-shadow: 0 0 10px rgba(34,197,94,.35);
+}
+.judge-score-line.score-low {
+  color: #ef4444 !important;
+  text-shadow: 0 0 10px rgba(239,68,68,.3);
+}
+.judge-score-line.score-neutral { color: #f5f6f7; }
+.judge-score-reveal {
+  opacity: 0;
+  animation: scoreReveal .45s ease var(--reveal-delay, 0s) forwards;
+}
+@keyframes scoreReveal {
+  from { opacity: 0; transform: translateY(6px) scale(.94); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+.score-roll {
+  display: inline-block;
+  height: 1.15em;
+  overflow: hidden;
+  vertical-align: bottom;
+  line-height: 1.15em;
+}
+.score-track {
+  display: block;
+  line-height: 1.15em;
+  animation: scoreRoll .95s cubic-bezier(.2,.8,.2,1) var(--reveal-delay, 0s) both;
+}
+@keyframes scoreRoll {
+  from { transform: translateY(0); }
+  to   { transform: translateY(var(--score-offset, 0em)); }
+}
+.judge-summary-reveal,
+.judge-summary-final {
+  opacity: 0;
+  animation: scoreReveal .45s ease var(--reveal-delay, 0s) forwards;
+}
+.judge-summary-final { animation-delay: 0s; }
+
+/* ---------- 出题加载：6 位评委逐个点亮 + 进度条 ---------- */
+@keyframes loaderIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes loaderSweep {
+  from { transform: translateX(-110%); }
+  to   { transform: translateX(110%); }
+}
+@keyframes loaderJudgeOn {
+  0%   { opacity: .28; filter: grayscale(1); transform: translateY(5px); }
+  60%  { opacity: 1; filter: grayscale(0); transform: translateY(-2px); }
+  100% { opacity: 1; filter: grayscale(0); transform: translateY(0); }
+}
+@keyframes loaderStatusOut { to { opacity: 0; } }
+@keyframes loaderStatusWork {
+  0% { opacity: 0; }
+  12% { opacity: 1; }
+  86% { opacity: 1; }
+  100% { opacity: 0; }
+}
+@keyframes loaderStatusIn { to { opacity: 1; } }
+@keyframes loaderCaptionCycle {
+  0% { opacity: 0; transform: translateY(4px); }
+  4% { opacity: 1; transform: translateY(0); }
+  15% { opacity: 1; }
+  17%, 100% { opacity: 0; }
+}
+@keyframes loaderProgress {
+  0% { width: 2%; }
+  18% { width: 26%; }
+  48% { width: 58%; }
+  78% { width: 82%; }
+  100% { width: 94%; }
+}
+[class*="st-key-loader_scene_"] {
+  position: relative;
+  overflow: hidden;
+  margin: 12px 0 16px;
+  padding: 16px 18px 14px;
+  background: linear-gradient(135deg, rgba(17,20,24,.98), rgba(13,18,30,.96));
+  border: 1px solid rgba(79,124,255,.28);
+  border-radius: 16px;
+  box-shadow: 0 14px 36px rgba(0,0,0,.28);
+  animation: loaderIn .35s ease both;
+}
+[class*="st-key-loader_scene_"]::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(110deg, transparent 20%, rgba(79,124,255,.14) 46%, transparent 72%);
+  transform: translateX(-110%);
+  animation: loaderSweep 2.6s linear infinite;
+}
+[class*="st-key-loader_scene_"] > div { position: relative; z-index: 1; }
+.loader-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.loader-title {
+  font-size: .95rem;
+  font-weight: 700;
+  color: #f5f6f7;
+  letter-spacing: .02em;
+}
+.loader-caption,
+.scoring-caption {
+  position: relative;
+  height: 1.4em;
+  margin-top: 4px;
+  font-size: .78rem;
+  color: #9fb4ff;
+}
+.loader-caption span,
+.scoring-caption span {
+  position: absolute;
+  left: 0;
+  top: 0;
+  white-space: nowrap;
+  opacity: 0;
+  animation: loaderCaptionCycle 10.8s linear infinite;
+  animation-delay: calc(var(--i, 0) * 1.8s);
+}
+.loader-eta {
+  flex-shrink: 0;
+  padding: 4px 10px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: rgba(255,255,255,.02);
+  color: var(--muted);
+  font-size: .72rem;
+  white-space: nowrap;
+}
+[class*="st-key-loader_judge_"] {
+  opacity: .28;
+  filter: grayscale(1);
+  transform: translateY(5px);
+  text-align: center;
+  animation: loaderJudgeOn .55s ease forwards;
+}
+[class*="st-key-loader_judge_"][class*="deepseek"] { animation-delay: 0s; }
+[class*="st-key-loader_judge_"][class*="qwen"] { animation-delay: .9s; }
+[class*="st-key-loader_judge_"][class*="glm"] { animation-delay: 1.8s; }
+[class*="st-key-loader_judge_"][class*="kimi"] { animation-delay: 2.7s; }
+[class*="st-key-loader_judge_"][class*="doubao"] { animation-delay: 3.6s; }
+[class*="st-key-loader_judge_"][class*="wenxin"] { animation-delay: 4.5s; }
+[class*="st-key-loader_judge_"] [data-testid="stImage"] {
+  display: flex;
+  justify-content: center;
+}
+[class*="st-key-loader_judge_"] img {
+  width: 56px !important;
+  height: 56px !important;
+  border-radius: 50% !important;
+  object-fit: cover !important;
+  border: 2px solid #2a3140 !important;
+  box-shadow: 0 0 0 3px rgba(79,124,255,.05);
+  animation: loaderAvatarPulse 1.8s ease-in-out 6s infinite;
+}
+@keyframes loaderAvatarPulse {
+  0%, 100% { box-shadow: 0 0 0 3px rgba(79,124,255,.05); }
+  50% { box-shadow: 0 0 0 4px rgba(79,124,255,.22), 0 0 18px rgba(79,124,255,.35); }
+}
+.loader-status {
+  position: relative;
+  height: 1.1rem;
+  margin-top: 4px;
+  font-size: .68rem;
+  line-height: 1.1rem;
+}
+.loader-status span {
+  position: absolute;
+  left: 0;
+  right: 0;
+}
+.loader-status .status-pending {
+  color: #5f6672;
+  animation: loaderStatusOut .25s ease var(--d, 0s) forwards;
+}
+.loader-status .status-working {
+  color: #7aa2ff;
+  opacity: 0;
+  animation: loaderStatusWork 1s ease var(--d, 0s) forwards;
+}
+.loader-status .status-done {
+  color: #4ade80;
+  opacity: 0;
+  animation: loaderStatusIn .25s ease calc(var(--d, 0s) + 1s) forwards;
+}
+.loader-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 14px;
+  color: var(--muted);
+  font-size: .7rem;
+}
+.loader-progress {
+  height: 7px;
+  margin-top: 6px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #1a202b;
+}
+.loader-progress > span {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #38bdf8, #6366f1 55%, #a855f7);
+  box-shadow: 0 0 14px rgba(99,102,241,.55);
+  animation: loaderProgress 12s cubic-bezier(.2,.7,.2,1) forwards;
+}
+
+/* ---------- 8 题节点进度条 ---------- */
+@keyframes progressPulse {
+  0%, 100% { box-shadow: 0 0 0 4px rgba(79,124,255,.14), 0 0 14px rgba(99,102,241,.45); }
+  50% { box-shadow: 0 0 0 6px rgba(79,124,255,.06), 0 0 22px rgba(99,102,241,.75); }
+}
+.progress-wrap {
+  margin-top: 14px;
+  padding: 14px 16px 10px;
+  background: rgba(17,20,24,.85);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+}
+.progress-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  color: var(--muted);
+  font-size: .76rem;
+}
+.progress-head b { color: #c7ccd4; }
+.progress-stepper { position: relative; }
+.progress-rail {
+  position: absolute;
+  left: 6.25%;
+  right: 6.25%;
+  top: 13px;
+  height: 4px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #1c2230;
+}
+.progress-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #38bdf8, #6366f1 55%, #a855f7);
+  box-shadow: 0 0 12px rgba(99,102,241,.55);
+  transition: width .5s ease;
+}
+.progress-nodes { position: relative; display: flex; }
+.progress-step {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+.progress-dot {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid #2a3140;
+  border-radius: 50%;
+  background: #151a23;
+  color: #6b7280;
+  font-size: .75rem;
+  font-weight: 700;
+}
+.progress-step.done .progress-dot {
+  color: #fff;
+  background: linear-gradient(135deg, #22c55e, #0ea5e9);
+  border-color: transparent;
+  box-shadow: 0 0 12px rgba(34,197,94,.35);
+}
+.progress-step.active .progress-dot {
+  color: #fff;
+  background: linear-gradient(135deg, #4f7cff, #a855f7);
+  border-color: transparent;
+  animation: progressPulse 1.7s ease-in-out infinite;
+}
+.progress-step.future .progress-dot { color: #6b7280; }
+.progress-label {
+  color: #5f6672;
+  font-size: .64rem;
+  white-space: nowrap;
+}
+.progress-step.done .progress-label { color: #8de6b0; }
+.progress-step.active .progress-label { color: #a9c0ff; }
 footer { visibility: hidden; }
 </style>
 """
@@ -964,6 +1368,59 @@ WRITER_USER_TEMPLATE = """这是第 {index} 道题（本场共 {min_q}-{max_q} �
 {asked}
 
 请给出第 {index} 道题（只输出 json）。"""
+
+# 第 1 题固定为「自我介绍」开场，避免一上来就问项目细节把人问懵。
+OPENING_QUESTION_RULES = """# 第 1 题特殊规则（最高优先级，覆盖上面的出题要求）
+这是整场面试的第 1 题，必须是**自我介绍开场题**，让候选人先放松下来、建立表达基线。
+1. 只问自我介绍相关：教育背景、学过什么、做过什么相关的东西、为什么想做这个岗位。
+2. 严禁直接问具体项目细节、技术实现细节、技术栈、架构、源码或性能优化。
+3. 不要问「你最近做的项目用了什么技术栈」这类会让没有项目经验的人卡住的问题。
+{resume_rule}
+4. 语气友好、口语化，不超过 60 字。
+5. 仍然只输出一个 json 对象：{{"question": "你要问的问题"}}"""
+
+OPENING_RESUME_RULE = "- 候选人已上传简历：可以邀请他结合简历里的教育背景 / 经历做自我介绍，但不要追问项目细节。"
+OPENING_NO_RESUME_RULE = "- 候选人没有上传简历：语气更友好，只问「学过什么、做过什么相关的东西」，不要预设他有项目经验。"
+OPENING_USER_HINT = """# 第 1 题特别提醒
+请只输出一道友好的自我介绍开场题，不要问项目技术栈或实现细节。只输出 json。"""
+OPENING_QUESTION_WITH_RESUME = "先简单介绍下你自己吧，可以聊聊你的教育背景、学过什么，以及做过哪些和这个岗位相关的事情。"
+OPENING_QUESTION_WITHOUT_RESUME = "先简单介绍下你自己吧，聊聊你学过什么、做过什么相关的东西，为什么想投这个岗位？"
+
+
+def opening_question_text(context: dict[str, str]) -> str:
+    """第 1 题兜底开场白：有简历 / 没简历两套问法。"""
+    if (context.get("resume_text") or "").strip():
+        return OPENING_QUESTION_WITH_RESUME
+    return OPENING_QUESTION_WITHOUT_RESUME
+
+
+def is_opening_question(text: str) -> bool:
+    """判断一道题是不是自我介绍开场题，防止模型一上来就追问项目细节。"""
+    content = (text or "").strip()
+    if not content:
+        return False
+    blocked = ("技术栈", "架构", "源码", "实现细节", "性能优化", "最近做的项目", "项目用了什么")
+    if any(word in content for word in blocked):
+        return False
+    markers = (
+        "自我介绍",
+        "介绍下你自己",
+        "介绍一下你自己",
+        "介绍你自己",
+        "介绍下自己",
+        "简单介绍",
+        "教育背景",
+        "学过什么",
+        "做过什么",
+        "聊聊你自己",
+    )
+    return any(marker in content for marker in markers)
+
+
+def ensure_opening_question(text: str, context: dict[str, str]) -> str:
+    """第 1 题必须是自我介绍；模型跑偏时用固定开场白兜底。"""
+    return text if is_opening_question(text) else opening_question_text(context)
+
 
 REVIEW_SYSTEM_TEMPLATE = """这是一道模拟面试题，请判断它是否像真实面试官会问的。标准放宽：只要题目方向对、不离谱、和岗位相关就通过，不要吹毛求疵。返回 JSON：{{"pass": true, "reason": "简短理由"}}（不通过时把 true 改成 false）
 
@@ -2104,6 +2561,91 @@ def judge_label(judge: str) -> str:
     return JUDGE_META.get(judge, {}).get("label", judge)
 
 
+def _judge_reveal_delay(judge: str) -> float:
+    """评委卡片逐个亮起的间隔：按固定顺序每 0.5 秒一位。"""
+    try:
+        return JUDGE_ORDER.index(judge) * 0.5
+    except ValueError:
+        return 0.0
+
+
+def judge_empty_score_html() -> str:
+    """未出分 / 解析失败时卡片上的占位分数。"""
+    return (
+        '<div class="judge-score-line score-neutral">—'
+        f'<span class="score-total"> / {SCORE_TOTAL_MAX}</span></div>'
+    )
+
+
+def judge_score_line_html(
+    result: dict[str, Any],
+    judge: str = "",
+    highlight: str = "",
+    animate: bool = False,
+) -> str:
+    """评分卡片上的分数 HTML：可选数字滚动 + 最高分绿色 / 最低分红色。"""
+    score = result.get("score")
+    tone = {"high": "score-high", "low": "score-low"}.get(highlight, "score-neutral")
+    if not isinstance(score, (int, float)):
+        return (
+            f'<div class="judge-score-line {tone}">—'
+            f'<span class="score-total"> / {SCORE_TOTAL_MAX}</span></div>'
+        )
+    delay = _judge_reveal_delay(judge) if animate else 0.0
+    if animate and float(score).is_integer():
+        final = max(0, min(int(round(float(score))), SCORE_TOTAL_MAX))
+        digits = "".join(
+            f"<span>{value}</span>" + ("<br>" if value < final else "")
+            for value in range(final + 1)
+        )
+        return (
+            f'<div class="judge-score-line judge-score-reveal {tone}" '
+            f'style="--reveal-delay:{delay:.1f}s">'
+            f'<span class="score-roll"><span class="score-track" '
+            f'style="--score-offset:-{final * 1.15:.2f}em">{digits}</span></span>'
+            f'<span class="score-total"> / {SCORE_TOTAL_MAX}</span></div>'
+        )
+    score_text = f"{score:g}" if isinstance(score, float) else str(score)
+    reveal = " judge-score-reveal" if animate else ""
+    style = f' style="--reveal-delay:{delay:.1f}s"' if animate else ""
+    return (
+        f'<div class="judge-score-line{reveal} {tone}"{style}>{score_text}'
+        f'<span class="score-total"> / {SCORE_TOTAL_MAX}</span></div>'
+    )
+
+
+def judge_thinking_html(judge: str) -> str:
+    """评委思考中的小动画；卡片本身会通过 :has 选择器同步震动。"""
+    return (
+        f'<div class="judge-thinking" style="--judge-delay:{_judge_reveal_delay(judge):.1f}s">'
+        '<span>评委思考中</span><span class="thinking-dots"><i></i><i></i><i></i></span>'
+        "</div>"
+    )
+
+
+def score_highlight_map(judge_results: list[dict[str, Any]]) -> dict[str, str]:
+    """最高分标绿、最低分标红；所有人同分时不着色。"""
+    valid = [
+        item
+        for item in judge_results
+        if item.get("judge") and isinstance(item.get("score"), (int, float))
+    ]
+    if len(valid) < 2:
+        return {}
+    scores = [float(item["score"]) for item in valid]
+    high, low = max(scores), min(scores)
+    if high == low:
+        return {}
+    highlights: dict[str, str] = {}
+    for item in valid:
+        value = float(item["score"])
+        if value == high:
+            highlights[item["judge"]] = "high"
+        elif value == low:
+            highlights[item["judge"]] = "low"
+    return highlights
+
+
 # --------------------------------------------------------------------------- #
 # Prompt 拼装
 # --------------------------------------------------------------------------- #
@@ -2136,7 +2678,10 @@ def build_context_block(context: dict[str, str]) -> str:
             f"<简历>\n{resume_text}\n</简历>"
         )
     else:
-        resume_block = "候选人未上传简历，完全依据现场回答判断。"
+        resume_block = (
+            "候选人未上传简历，不要预设其有项目经验；"
+            "可以多问「学过什么、做过什么相关的东西」，完全依据现场回答判断。"
+        )
 
     track = detect_job_track(context["job"])
     lines = [
@@ -2166,7 +2711,7 @@ def build_context_block(context: dict[str, str]) -> str:
 def build_asked_summary(asked: list[str]) -> str:
     """把已经问过的问题编号列出，避免评委重复出题。"""
     if not asked:
-        return "（第 1 题，还没有问过任何问题；可以先从自我介绍或最相关的项目经历切入）"
+        return "（第 1 题，还没有问过任何问题；按要求先做自我介绍开场，不要追问项目细节）"
     return "\n".join(f"{i}. {q}" for i, q in enumerate(asked, start=1))
 
 
@@ -2183,6 +2728,15 @@ def build_writer_messages(
     user = WRITER_USER_TEMPLATE.format(
         index=index, min_q=MIN_QUESTIONS, max_q=MAX_QUESTIONS, asked=build_asked_summary(asked)
     )
+    if index == 1:
+        # 第一题固定是「自我介绍」开场：有简历 / 没简历分别用更友好的规则。
+        resume_rule = (
+            OPENING_RESUME_RULE
+            if (context.get("resume_text") or "").strip()
+            else OPENING_NO_RESUME_RULE
+        )
+        system = system + "\n\n" + OPENING_QUESTION_RULES.format(resume_rule=resume_rule)
+        user = user + "\n\n" + OPENING_USER_HINT
     return [{"role": "system", "content": system}, {"role": "user", "content": user}]
 
 
@@ -2219,6 +2773,13 @@ def build_rewrite_messages(
         reasons=reasons or "（评审未给出具体意见，请按岗位相关性自行优化）",
         asked=build_asked_summary(asked),
     )
+    if index == 1:
+        user += (
+            "\n\n# 第 1 题特别要求\n"
+            "这是开场自我介绍题。重写后仍然必须是友好的自我介绍开场，"
+            "只能问教育背景 / 学过什么 / 做过什么相关的东西，"
+            "不要改成具体项目细节、技术实现细节或技术栈追问。"
+        )
     return [{"role": "system", "content": system}, {"role": "user", "content": user}]
 
 
@@ -2396,6 +2957,9 @@ def generate_question(
             continue
         question = parse_question(text)
         if question:
+            if index == 1:
+                # 第 1 题必须是自我介绍；模型跑偏时用固定开场白兜底。
+                question = ensure_opening_question(question, context)
             return name, question, ""
         last_error = f"{judge_label(name)} 没有返回可用的题目。"
     return writer, "", last_error or "出题模型都没有给出可用的题目。"
@@ -2665,24 +3229,35 @@ def create_live_judge_slots(judges: list[str], labels: dict[str, str]) -> dict[s
     return slots
 
 
-def update_judge_slot(slot: dict[str, Any], judge: str, text: str, err: str) -> None:
-    """把单个评委结果刷到「分数 + 折叠评语」两个占位符里。"""
+def update_judge_slot(
+    slot: dict[str, Any], judge: str, text: str, err: str, reveal_score: bool = True
+) -> None:
+    """把单个评委结果刷到「分数 + 折叠评语」两个占位符里。
+
+    reveal_score=False 时先在卡片上显示「已完成评分」，等全部评委结束后再由
+    score_answer_stream 按 0.5 秒间隔逐个亮起分数（数字滚动动画）。
+    """
     score_ph = slot["score"]
     comment_ph = slot["comment"]
     if err:
-        score_ph.markdown("**—**")
+        score_ph.markdown(judge_empty_score_html(), unsafe_allow_html=True)
         comment_ph.markdown(f"❌ {err}")
         return
     parsed = parse_score_for_judge(text, judge)
     if parsed is None:
-        score_ph.markdown("**—**")
+        score_ph.markdown(judge_empty_score_html(), unsafe_allow_html=True)
         comment_ph.markdown("⚠️ 评分格式无法解析。")
         return
     if parsed.get("score") is None:
-        score_ph.markdown("**—**")
+        score_ph.markdown(judge_empty_score_html(), unsafe_allow_html=True)
         comment_ph.markdown("⚠️ 这位评委没有给出有效评分。")
         return
-    score_ph.markdown(judge_score_value_markdown(parsed))
+    if reveal_score:
+        score_ph.markdown(
+            judge_score_line_html(parsed, judge, animate=True), unsafe_allow_html=True
+        )
+    else:
+        score_ph.markdown('<div class="judge-done">✓ 已完成评分</div>', unsafe_allow_html=True)
     comment_ph.markdown(judge_detail_markdown(parsed))
 
 
@@ -2706,11 +3281,13 @@ def score_answer_stream(
     for name in judges:
         slot = slots.get(name)
         if slot:
-            slot["score"].markdown("⏳ 评分中")
+            slot["score"].markdown(judge_thinking_html(name), unsafe_allow_html=True)
             slot["comment"].markdown("")
     summary_slot = slots.get("__summary__")
     if summary_slot:
-        summary_slot.markdown("**⏳ 正在评分...**")
+        summary_slot.markdown(
+            build_cycling_caption_html("正在打分"), unsafe_allow_html=True
+        )
 
     clients = get_clients()  # 在主线程取（st.cache_resource 不适合在子线程调用）
 
@@ -2742,7 +3319,7 @@ def score_answer_stream(
                     results[name] = ("", f"{labels[name]} 调用异常：{exc}")
                 slot = slots.get(name)
                 if slot:
-                    update_judge_slot(slot, name, *results[name])
+                    update_judge_slot(slot, name, *results[name], reveal_score=False)
             if pending and time.monotonic() > deadline:
                 for future in pending:
                     name = futures[future]
@@ -2752,17 +3329,40 @@ def score_answer_stream(
                     )
                     slot = slots.get(name)
                     if slot:
-                        update_judge_slot(slot, name, *results[name])
+                        update_judge_slot(slot, name, *results[name], reveal_score=False)
                 pending.clear()
     finally:
         pool.shutdown(wait=False)  # 到点了就返回，不等还在跑的线程
     sync_working_models_to_state()
 
     outcome = build_score_outcome(results, judges)
+
+    # 全部评委结束后再逐个亮分：最高分绿色、最低分红色，分数从 0 滚到最终值。
+    highlights = score_highlight_map(outcome["judge_results"])
+    for result in outcome["judge_results"]:
+        if result.get("score") is None:
+            continue
+        slot = slots.get(result["judge"])
+        if not slot:
+            continue
+        slot["score"].markdown(
+            judge_score_line_html(
+                result,
+                result["judge"],
+                highlights.get(result["judge"], ""),
+                animate=True,
+            ),
+            unsafe_allow_html=True,
+        )
+
     if summary_slot:
         if outcome["score"] is not None:
+            max_delay = max((_judge_reveal_delay(name) for name in judges), default=0.0)
             summary_slot.markdown(
-                f"**本题平均分　{outcome['score']:.1f} / {SCORE_TOTAL_MAX}**"
+                f'<div class="judge-summary-reveal" '
+                f'style="--reveal-delay:{max_delay + 0.45:.1f}s">'
+                f"<b>本题平均分　{outcome['score']:.1f} / {SCORE_TOTAL_MAX}</b></div>",
+                unsafe_allow_html=True,
             )
         else:
             summary_slot.caption("没有有效评分")
@@ -2910,13 +3510,17 @@ def submit_answer(answer: str, judge_slots: dict[str, Any] | None = None) -> Non
         return
 
     # 4) 继续下一题（换一位主考官重新走「出题 → 评审投票」流程）
-    if ask_next_question():
-        state.phase = "questions"
-    else:
-        state.awaiting_answer = False
-        state.current_question = ""
-        state.current_question_meta = {}
-        state.phase = "finished"
+    loader = render_stage_loader("question")
+    try:
+        if ask_next_question():
+            state.phase = "questions"
+        else:
+            state.awaiting_answer = False
+            state.current_question = ""
+            state.current_question_meta = {}
+            state.phase = "finished"
+    finally:
+        loader.empty()
     if warnings:
         state.error = f"{state.error}；{warnings}" if state.error else warnings
 
@@ -3525,6 +4129,90 @@ def run_judge_health_check() -> dict[str, dict[str, Any]]:
     return health
 
 
+def build_progress_stepper_html(
+    answered: int, phase: str = "questions", total: int = MAX_QUESTIONS
+) -> str:
+    """8 个节点的面试进度条：已完成打勾，当前节点高亮，底层是渐变色轨道。"""
+    total = max(1, int(total))
+    completed = max(0, min(int(answered), total))
+    active = completed if phase == "questions" and completed < total else -1
+    percent = completed / total * 100
+    steps: list[str] = []
+    for index in range(total):
+        number = index + 1
+        if index < completed:
+            state = "done"
+            mark = "✓"
+        elif index == active:
+            state = "active"
+            mark = str(number)
+        else:
+            state = "future"
+            mark = str(number)
+        steps.append(
+            f'<div class="progress-step {state}">'
+            f'<span class="progress-dot">{mark}</span>'
+            f'<span class="progress-label">第{number}题</span></div>'
+        )
+    return (
+        '<div class="progress-wrap">'
+        '<div class="progress-head"><span>面试进度</span>'
+        f"<span><b>{completed}</b> / {total} 题</span></div>"
+        '<div class="progress-stepper">'
+        f'<div class="progress-rail"><div class="progress-fill" style="width:{percent:.2f}%"></div></div>'
+        '<div class="progress-nodes">'
+        + "".join(steps)
+        + "</div></div></div>"
+    )
+
+
+def build_cycling_caption_html(action: str, css_class: str = "scoring-caption") -> str:
+    """轮播「文心一言正在出题...」这类文案（纯 CSS 动画）。"""
+    spans = "".join(
+        f'<span style="--i:{index}">{judge_label(name)} {action}...</span>'
+        for index, name in enumerate(JUDGE_ORDER)
+    )
+    return f'<div class="{css_class}">{spans}</div>'
+
+
+def render_stage_loader(mode: str = "question") -> Any:
+    """6 位评委头像逐个点亮的加载动画；返回占位符，调用方结束后 empty()。"""
+    action = "正在出题" if mode == "question" else "正在打分"
+    working = "出题中..." if mode == "question" else "打分中..."
+    title = "评委团正在出题" if mode == "question" else "评委团正在打分"
+    placeholder = st.empty()
+    with placeholder.container():
+        with st.container(key=f"loader_scene_{mode}"):
+            st.markdown(
+                '<div class="loader-head">'
+                f'<div><div class="loader-title">{title}</div>'
+                f'{build_cycling_caption_html(action, "loader-caption")}</div>'
+                '<div class="loader-eta">预计 10-15 秒</div>'
+                "</div>",
+                unsafe_allow_html=True,
+            )
+            columns = st.columns(len(JUDGE_ORDER), gap="small")
+            for index, name in enumerate(JUDGE_ORDER):
+                with columns[index]:
+                    with st.container(key=f"loader_judge_{mode}_{name}"):
+                        st.image(judge_avatar(name), width=56)
+                        st.markdown(
+                            f'<div class="loader-status" style="--d:{index * 0.9:.1f}s">'
+                            '<span class="status-pending">等待中</span>'
+                            f'<span class="status-working">{working}</span>'
+                            '<span class="status-done">已完成</span>'
+                            "</div>",
+                            unsafe_allow_html=True,
+                        )
+            st.markdown(
+                '<div class="loader-meta"><span>正在协调 6 位评委，请稍候</span>'
+                '<span>逐位点亮中</span></div>'
+                '<div class="loader-progress"><span></span></div>',
+                unsafe_allow_html=True,
+            )
+    return placeholder
+
+
 def render_judge_roster() -> None:
     """展示 6 位评委的模型与人设。"""
     st.markdown(
@@ -3738,11 +4426,8 @@ def render_suggest() -> None:
         return
 
     quick = bool(pending.get("quick_mode"))
-    with st.spinner(
-        "GLM 正在出题（快速模式）……"
-        if quick
-        else f"评委团（{len(FAST_JUDGES)} 个快模型出题 + {REVIEW_TEAM_SIZE} 位评审投票）正在出题……"
-    ):
+    loader = render_stage_loader("question")
+    try:
         started = start_interview(
             job,
             pending.get("mode", MODE_HR),
@@ -3752,6 +4437,8 @@ def render_suggest() -> None:
             pending.get("resume_name", ""),
             quick=quick,
         )
+    finally:
+        loader.empty()
     if not started:
         state.stage = "setup"
         state.error = state.error or "第 1 题没出出来，请检查输入或稍后重试。"
@@ -3990,6 +4677,7 @@ def render_judge_panel(state: Any) -> dict[str, Any]:
     judges = score_judges()
     record = state.qa_history[-1] if state.qa_history else None
     results = {r["judge"]: r for r in (record or {}).get("judge_results", [])}
+    highlights = score_highlight_map((record or {}).get("judge_results", []))
     st.markdown("#### 评委评分")
     slots: dict[str, Any] = {}
     for name in judges:
@@ -4004,9 +4692,14 @@ def render_judge_panel(state: Any) -> dict[str, Any]:
                 score_ph = st.empty()
                 result = results.get(name) or {}
                 if result.get("score") is not None:
-                    score_ph.markdown(judge_score_value_markdown(result))
+                    score_ph.markdown(
+                        judge_score_line_html(
+                            result, name, highlights.get(name, ""), animate=False
+                        ),
+                        unsafe_allow_html=True,
+                    )
                 else:
-                    score_ph.markdown("**—**")
+                    score_ph.markdown(judge_empty_score_html(), unsafe_allow_html=True)
             with st.expander("查看评语", expanded=False):
                 comment_ph = st.empty()
                 if result:
@@ -4018,7 +4711,9 @@ def render_judge_panel(state: Any) -> dict[str, Any]:
         summary_ph = st.empty()
         if record and record.get("score") is not None:
             summary_ph.markdown(
-                f"**最新平均分　{record['score']:.1f} / {SCORE_TOTAL_MAX}**"
+                f'<div class="judge-summary-final">'
+                f"<b>最新平均分　{record['score']:.1f} / {SCORE_TOTAL_MAX}</b></div>",
+                unsafe_allow_html=True,
             )
         else:
             summary_ph.caption("等待评分")
@@ -4035,9 +4730,16 @@ def render_question_phase(state: Any, answered: int, judge_slots: dict[str, Any]
         with avatar_col:
             st.image(judge_avatar(writer), width=64)
         with bubble_col:
-            with st.container(key="question_bubble"):
-                st.caption(f"第 {answered + 1} 题 · 主考官 {judge_label(writer)}")
+            with st.container(key=f"question_bubble_{answered + 1}"):
+                question_label = f"第 {answered + 1} 题 · 主考官 {judge_label(writer)}"
+                if answered == 0:
+                    question_label = f"第 1 题 · 自我介绍开场 · 主考官 {judge_label(writer)}"
+                st.caption(question_label)
                 st.markdown(state.current_question)
+    if answered == 0 and not state.resume_text:
+        st.caption(
+            "没有简历也没关系：聊聊你学过什么、做过什么相关的东西就好，不用硬凑项目。"
+        )
 
     answer = st.text_area(
         "你的回答",
@@ -4127,9 +4829,12 @@ def render_finished_phase() -> None:
             generate_report()
         st.rerun()
     if col2.button("🔄 重新出下一题", use_container_width=True):
-        with st.spinner("评委团正在出题……"):
+        loader = render_stage_loader("question")
+        try:
             if ask_next_question():
                 state.phase = "questions"
+        finally:
+            loader.empty()
         st.rerun()
 
 
@@ -4246,9 +4951,9 @@ def render_interview() -> None:
             render_reverse_phase()
         elif state.phase == "finished":
             render_finished_phase()
-        st.progress(
-            min(answered, MAX_QUESTIONS) / MAX_QUESTIONS,
-            text=f"进度 {answered} / {MAX_QUESTIONS}",
+        st.markdown(
+            build_progress_stepper_html(answered, state.phase),
+            unsafe_allow_html=True,
         )
 
     if state.qa_history:
@@ -4575,14 +5280,19 @@ def main() -> None:
         st.error(state.error)
         state.error = ""
 
+    # 每个页面包一层带 key 的容器：切换时由 CSS 做 0.3 秒淡入 + 压暗转场。
     if state.stage == "setup":
-        render_setup()
+        with st.container(key="page_setup"):
+            render_setup()
     elif state.stage == "confirm":
-        render_suggest()
+        with st.container(key="page_confirm"):
+            render_suggest()
     elif state.stage == "interview":
-        render_interview()
+        with st.container(key="page_interview"):
+            render_interview()
     else:
-        render_report()
+        with st.container(key="page_report"):
+            render_report()
 
 
 if __name__ == "__main__":
